@@ -1,5 +1,5 @@
 const BaseRepository = require('./base.repository');
-const { Restaurant, RestaurantWallet, User, Menu, Review } = require('../models');
+const { Restaurant, RestaurantWallet, User, Menu, Review, Address, City } = require('../models');
 
 class RestaurantRepository extends BaseRepository {
   constructor() {
@@ -13,6 +13,22 @@ class RestaurantRepository extends BaseRepository {
           model: User,
           as: 'owner',
           attributes: ['id', 'name', 'email', 'phone_number']
+        },
+        {
+          model: Address,
+          as: 'address',
+          include: [
+            {
+              model: City,
+              as: 'city',
+              include: [
+                {
+                  model: require('../models').Province,
+                  as: 'province'
+                }
+              ]
+            }
+          ]
         },
         {
           model: RestaurantWallet,
@@ -29,6 +45,22 @@ class RestaurantRepository extends BaseRepository {
         model: User,
         as: 'owner',
         attributes: ['id', 'name']
+      },
+      {
+        model: Address,
+        as: 'address',
+        include: [
+          {
+            model: City,
+            as: 'city',
+            include: [
+              {
+                model: require('../models').Province,
+                as: 'province'
+              }
+            ]
+          }
+        ]
       },
       {
         model: Menu,
@@ -87,22 +119,65 @@ class RestaurantRepository extends BaseRepository {
   }
 
   async findByCity(city, page = 1, limit = 20, filters = {}) {
-    const whereClause = this.buildWhereClause({ city, status: 'active', ...filters });
+    const whereClause = this.buildWhereClause({ status: 'active', ...filters });
+
+    let include = [
+      {
+        model: User,
+        as: 'owner',
+        attributes: ['id', 'name', 'phone_number']
+      }
+    ];
+
+    // Add address filtering if city is provided
+    if (city) {
+      include.push({
+        model: Address,
+        as: 'address',
+        include: [
+          {
+            model: City,
+            as: 'city',
+            where: typeof city === 'string'
+              ? { name: { [require('sequelize').Op.like]: `%${city}%` } }
+              : { id: city },
+            include: [
+              {
+                model: require('../models').Province,
+                as: 'province'
+              }
+            ]
+          }
+        ]
+      });
+    } else {
+      include.push({
+        model: Address,
+        as: 'address',
+        include: [
+          {
+            model: City,
+            as: 'city',
+            include: [
+              {
+                model: require('../models').Province,
+                as: 'province'
+              }
+            ]
+          }
+        ]
+      });
+    }
+
+    include.push({
+      model: RestaurantWallet,
+      as: 'wallet',
+      attributes: ['balance']
+    });
 
     return await this.paginate(page, limit, {
       where: whereClause,
-      include: [
-        {
-          model: User,
-          as: 'owner',
-          attributes: ['id', 'name', 'phone_number']
-        },
-        {
-          model: RestaurantWallet,
-          as: 'wallet',
-          attributes: ['balance']
-        }
-      ],
+      include,
       order: [['created_at', 'DESC']]
     });
   }

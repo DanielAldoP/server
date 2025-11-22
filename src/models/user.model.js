@@ -32,7 +32,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     address_id: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       field: 'address_id'
     },
     role: {
@@ -89,6 +89,11 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: 'user_id',
       sourceKey: 'id',
       as: 'wallet'
+    });
+    User.belongsTo(models.Address, {
+      foreignKey: 'address_id',
+      sourceKey: 'id',
+      as: 'address'
     });
     User.hasMany(models.Restaurant, {
       foreignKey: 'owner_id',

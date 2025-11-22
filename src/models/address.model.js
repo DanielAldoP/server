@@ -9,7 +9,13 @@ module.exports = (sequelize, DataTypes) => {
     city_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: 'city_id'
+      field: 'city_id',
+      references: {
+        model: 'cities',
+        key: 'id'
+      },
+      onUpdate: 'CASCADE',
+      onDelete: 'RESTRICT'
     },
     name: {
       type: DataTypes.STRING(255),
@@ -54,5 +60,24 @@ module.exports = (sequelize, DataTypes) => {
       }
     }
   });
+
+  Address.associate = function(models) {
+    Address.belongsTo(models.City, {
+      foreignKey: 'city_id',
+      sourceKey: 'id',
+      as: 'city'
+    });
+    Address.hasMany(models.User, {
+      foreignKey: 'address_id',
+      sourceKey: 'id',
+      as: 'users'
+    });
+    Address.hasMany(models.Restaurant, {
+      foreignKey: 'address_id',
+      sourceKey: 'id',
+      as: 'restaurants'
+    });
+  };
+
   return Address;
 };

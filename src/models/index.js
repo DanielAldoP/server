@@ -30,7 +30,10 @@ const models = {
   WalletTransaction: require('./wallet-transaction.model')(sequelize, Sequelize.DataTypes),
   AdminChat: require('./admin-chat.model')(sequelize, Sequelize.DataTypes),
   AdminChatMessage: require('./admin-chat-message.model')(sequelize, Sequelize.DataTypes),
-  Notification: require('./notification.model')(sequelize, Sequelize.DataTypes)
+  Notification: require('./notification.model')(sequelize, Sequelize.DataTypes),
+  Address: require('./address.model')(sequelize, Sequelize.DataTypes),
+  Province: require('./province.model')(sequelize, Sequelize.DataTypes),
+  City: require('./city.model')(sequelize, Sequelize.DataTypes)
 };
 
 // Set up associations

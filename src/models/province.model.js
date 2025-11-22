@@ -39,5 +39,14 @@ module.exports = (sequelize, DataTypes) => {
       }
     }
   });
+
+  Province.associate = function(models) {
+    Province.hasMany(models.City, {
+      foreignKey: 'province_id',
+      sourceKey: 'id',
+      as: 'cities'
+    });
+  };
+
   return Province;
 };

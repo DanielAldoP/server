@@ -83,6 +83,11 @@ module.exports = (sequelize, DataTypes) => {
       sourceKey: 'id',
       as: 'owner'
     });
+    Restaurant.belongsTo(models.Address, {
+      foreignKey: 'address_id',
+      sourceKey: 'id',
+      as: 'address'
+    });
     Restaurant.hasOne(models.RestaurantWallet, {
       foreignKey: 'restaurant_id',
       sourceKey: 'id',

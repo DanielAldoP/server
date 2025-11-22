@@ -1,5 +1,5 @@
 const BaseRepository = require('./base.repository');
-const { User, UserWallet } = require('../models');
+const { User, UserWallet, Address, City } = require('../models');
 
 class UserRepository extends BaseRepository {
   constructor() {
@@ -14,14 +14,50 @@ class UserRepository extends BaseRepository {
 
   async findByEmailWithWallet(email) {
     return await this.findOne({ email }, {
-      include: [{ model: UserWallet, as: 'wallet' }]
+      include: [
+        { model: UserWallet, as: 'wallet' },
+        {
+          model: Address,
+          as: 'address',
+          include: [
+            {
+              model: City,
+              as: 'city',
+              include: [
+                {
+                  model: require('../models').Province,
+                  as: 'province'
+                }
+              ]
+            }
+          ]
+        }
+      ]
     });
   }
 
   async findByIdWithWallet(id) {
     return await this.findById(id, {
       attributes: { exclude: ['password'] },
-      include: [{ model: UserWallet, as: 'wallet' }]
+      include: [
+        { model: UserWallet, as: 'wallet' },
+        {
+          model: Address,
+          as: 'address',
+          include: [
+            {
+              model: City,
+              as: 'city',
+              include: [
+                {
+                  model: require('../models').Province,
+                  as: 'province'
+                }
+              ]
+            }
+          ]
+        }
+      ]
     });
   }
 
@@ -48,12 +84,56 @@ class UserRepository extends BaseRepository {
   }
 
   async findByCity(city, page = 1, limit = 20, filters = {}) {
-    const whereClause = this.buildWhereClause({ city, ...filters });
+    const whereClause = this.buildWhereClause({ is_active: true, ...filters });
+
+    let include = [
+      { model: UserWallet, as: 'wallet' }
+    ];
+
+    // Add address filtering if city is provided
+    if (city) {
+      include.push({
+        model: Address,
+        as: 'address',
+        include: [
+          {
+            model: City,
+            as: 'city',
+            where: typeof city === 'string'
+              ? { name: { [require('sequelize').Op.like]: `%${city}%` } }
+              : { id: city },
+            include: [
+              {
+                model: require('../models').Province,
+                as: 'province'
+              }
+            ]
+          }
+        ]
+      });
+    } else {
+      include.push({
+        model: Address,
+        as: 'address',
+        include: [
+          {
+            model: City,
+            as: 'city',
+            include: [
+              {
+                model: require('../models').Province,
+                as: 'province'
+              }
+            ]
+          }
+        ]
+      });
+    }
 
     return await this.paginate(page, limit, {
       where: whereClause,
       attributes: { exclude: ['password'] },
-      include: [{ model: UserWallet, as: 'wallet' }],
+      include,
       order: [['created_at', 'DESC']]
     });
   }
@@ -62,6 +142,35 @@ class UserRepository extends BaseRepository {
     return await this.findAll({
       where: { role: 'admin' },
       attributes: ['id', 'name', 'email']
+    });
+  }
+
+  async findByIdWithRelations(id, options = {}) {
+    const { attributes = { exclude: ['password'] }, include = [] } = options;
+
+    const defaultInclude = [
+      { model: UserWallet, as: 'wallet' },
+      {
+        model: Address,
+        as: 'address',
+        include: [
+          {
+            model: City,
+            as: 'city',
+            include: [
+              {
+                model: require('../models').Province,
+                as: 'province'
+              }
+            ]
+          }
+        ]
+      }
+    ];
+
+    return await this.findById(id, {
+      attributes,
+      include: include.length > 0 ? include : defaultInclude
     });
   }
 

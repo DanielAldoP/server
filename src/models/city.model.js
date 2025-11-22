@@ -10,6 +10,12 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false,
       field: 'province_id',
+      references: {
+        model: 'provinces',
+        key: 'id'
+      },
+      onUpdate: 'CASCADE',
+      onDelete: 'RESTRICT'
     },
     name: {
       type: DataTypes.STRING(255),
@@ -44,5 +50,19 @@ module.exports = (sequelize, DataTypes) => {
       }
     }
   });
+
+  City.associate = function(models) {
+    City.belongsTo(models.Province, {
+      foreignKey: 'province_id',
+      sourceKey: 'id',
+      as: 'province'
+    });
+    City.hasMany(models.Address, {
+      foreignKey: 'city_id',
+      sourceKey: 'id',
+      as: 'addresses'
+    });
+  };
+
   return City;
 };

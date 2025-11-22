@@ -1,4 +1,4 @@
-const { User, Restaurant, Order, DailyOrder, UserWallet, RestaurantWallet, WalletTransaction, Review, AdminChat, AdminChatMessage } = require('../models');
+const { User, Restaurant, Order, DailyOrder, UserWallet, RestaurantWallet, WalletTransaction, Review, AdminChat, AdminChatMessage, Address, City } = require('../models');
 const { createNotification } = require('../helpers/notification.helper');
 const { NotFoundError, ForbiddenError, ValidationError } = require('../helpers/error.helper');
 const { validateRequired, validateNumber, validateEnum } = require('../helpers/validation.helper');
@@ -58,13 +58,44 @@ class AdminService {
 
     const where = {};
     if (role) where.role = role;
-    if (city) where.city = city;
     if (isActive !== undefined) where.is_active = isActive === 'true';
+
+    let include = [
+      { model: UserWallet, as: 'wallet' }
+    ];
+
+    // If city filter is provided, include address relationship
+    if (city) {
+      include.push({
+        model: Address,
+        as: 'address',
+        include: [
+          {
+            model: City,
+            as: 'city',
+            where: typeof city === 'string'
+              ? { name: { [require('sequelize').Op.like]: `%${city}%` } }
+              : { id: city }
+          }
+        ]
+      });
+    } else {
+      include.push({
+        model: Address,
+        as: 'address',
+        include: [
+          {
+            model: City,
+            as: 'city'
+          }
+        ]
+      });
+    }
 
     const { count, rows } = await User.findAndCountAll({
       where,
       attributes: { exclude: ['password'] },
-      include: [{ model: UserWallet, as: 'wallet' }],
+      include,
       limit: parseInt(limit),
       offset: parseInt(offset),
       order: [['created_at', 'DESC']]
@@ -98,22 +129,54 @@ class AdminService {
 
     const where = {};
     if (status) where.status = status;
-    if (city) where.city = city;
+
+    let include = [
+      {
+        model: User,
+        as: 'owner',
+        attributes: ['id', 'name', 'email', 'phone_number']
+      }
+    ];
+
+    // If city filter is provided, include address relationship
+    if (city) {
+      include.push({
+        model: Address,
+        as: 'address',
+        include: [
+          {
+            model: City,
+            as: 'city',
+            where: typeof city === 'string'
+              ? { name: { [require('sequelize').Op.like]: `%${city}%` } }
+              : { id: city }
+          }
+        ]
+      });
+    } else {
+      include.push({
+        model: Address,
+        as: 'address',
+        include: [
+          {
+            model: City,
+            as: 'city'
+          }
+        ]
+      });
+    }
+
+    include.push(
+      {
+        model: RestaurantWallet,
+        as: 'wallet',
+        attributes: ['balance']
+      }
+    );
 
     const { count, rows } = await Restaurant.findAndCountAll({
       where,
-      include: [
-        {
-          model: User,
-          as: 'owner',
-          attributes: ['id', 'name', 'email', 'phone_number']
-        },
-        {
-          model: RestaurantWallet,
-          as: 'wallet',
-          attributes: ['balance']
-        }
-      ],
+      include,
       limit: parseInt(limit),
       offset: parseInt(offset),
       order: [['created_at', 'DESC']]

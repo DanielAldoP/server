@@ -7,6 +7,8 @@ const reviewRepository = require('./review.repository');
 const walletRepository = require('./wallet.repository');
 const adminChatRepository = require('./admin-chat.repository');
 const notificationRepository = require('./notification.repository');
+const addressRepository = require('./address.repository');
+const cityRepository = require('./city.repository');
 
 module.exports = {
   userRepository,
@@ -17,5 +19,7 @@ module.exports = {
   reviewRepository,
   walletRepository,
   adminChatRepository,
-  notificationRepository
+  notificationRepository,
+  addressRepository,
+  cityRepository
 };

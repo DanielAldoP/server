@@ -1,4 +1,4 @@
-const { Menu, Restaurant, DailyMenu, DailyOrder } = require('../models');
+const { Menu, Restaurant, DailyMenu, DailyOrder, Address, City } = require('../models');
 const { NotFoundError, ForbiddenError, ValidationError } = require('../helpers/error.helper');
 const { validateRequired, validateNumber } = require('../helpers/validation.helper');
 
@@ -222,7 +222,24 @@ class MenuService {
 
   static async validateMenuAvailability(menu_id, userCity) {
     const menu = await Menu.findByPk(menu_id, {
-      include: [{ model: Restaurant, as: 'restaurant', attributes: ['id', 'owner_id', 'city', 'name', 'status'] }]
+      include: [
+        {
+          model: Restaurant, as: 'restaurant',
+          attributes: ['id', 'owner_id', 'name', 'status'],
+          include: [
+            {
+              model: Address,
+              as: 'address',
+              include: [
+                {
+                  model: City,
+                  as: 'city'
+                }
+              ]
+            }
+          ]
+        }
+      ]
     });
 
     if (!menu || !menu.is_active) {
@@ -233,7 +250,26 @@ class MenuService {
       throw new ValidationError(`Restaurant ${menu.restaurant.name} is not active`);
     }
 
-    if (menu.restaurant.city !== userCity) {
+    // Check if restaurant is in user's city
+    const restaurantCity = menu.restaurant.address?.city;
+    if (!restaurantCity) {
+      throw new ValidationError(`Restaurant ${menu.restaurant.name} has no valid address`);
+    }
+
+    let userCityValue = userCity;
+    if (typeof userCity === 'object' && userCity.name) {
+      userCityValue = userCity.name.toLowerCase();
+    } else if (typeof userCity === 'string') {
+      userCityValue = userCity.toLowerCase();
+    } else if (typeof userCity === 'number') {
+      // Compare by city ID
+      if (restaurantCity.id !== userCity) {
+        throw new ValidationError(`Restaurant ${menu.restaurant.name} is not in your city`);
+      }
+    }
+
+    // Compare city names if we have string values
+    if (typeof userCityValue === 'string' && restaurantCity.name.toLowerCase() !== userCityValue) {
       throw new ValidationError(`Restaurant ${menu.restaurant.name} is not in your city`);
     }
 
@@ -242,7 +278,24 @@ class MenuService {
 
   static async getMenuById(id) {
     const menu = await Menu.findByPk(id, {
-      include: [{ model: Restaurant, as: 'restaurant', attributes: ['id', 'name', 'city', 'status'] }]
+      include: [
+        {
+          model: Restaurant, as: 'restaurant',
+          attributes: ['id', 'name', 'status'],
+          include: [
+            {
+              model: Address,
+              as: 'address',
+              include: [
+                {
+                  model: City,
+                  as: 'city'
+                }
+              ]
+            }
+          ]
+        }
+      ]
     });
 
     if (!menu) {

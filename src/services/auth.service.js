@@ -69,7 +69,8 @@ class AuthService {
         name: user.name,
         email: user.email,
         phone_number: user.phone_number,
-        city: user.city,
+        address: user.address,
+        city: user.address?.city || null,
         role: user.role,
         is_active: user.is_active,
         wallet: user.wallet
@@ -89,12 +90,34 @@ class AuthService {
   }
 
   static async updateProfile(userId, updateData) {
-    // Update user with validated data
-    await userRepository.update(updateData, { id: userId });
+    const { addressData, ...userData } = updateData;
 
-    // Get updated user
-    return await userRepository.findById(userId, {
-      attributes: { exclude: ['password'] }
+    // Handle address update if provided
+    if (addressData) {
+      const user = await userRepository.findById(userId);
+      if (user && user.address_id) {
+        await require('../repositories').addressRepository.update(user.address_id, addressData);
+      } else if (user && addressData.city_id) {
+        // Create new address if user doesn't have one
+        const newAddress = await require('../repositories').addressRepository.create({
+          city_id: addressData.city_id,
+          name: addressData.name || 'User Address',
+          type: 'user',
+          meta: JSON.stringify(addressData.meta || {})
+        });
+        await userRepository.update({ address_id: newAddress.id }, { id: userId });
+      }
+    }
+
+    // Update user with validated data
+    if (Object.keys(userData).length > 0) {
+      await userRepository.update(userData, { id: userId });
+    }
+
+    // Get updated user with address
+    return await userRepository.findByIdWithRelations(userId, {
+      attributes: { exclude: ['password'] },
+      include: ['address', 'wallet']
     });
   }
 
