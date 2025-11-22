@@ -30,10 +30,10 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       field: 'phone_number'
     },
-    city: {
-      type: DataTypes.STRING(100),
+    address_id: {
+      type: DataTypes.INTEGER,
       allowNull: false,
-      field: 'city'
+      field: 'address_id'
     },
     role: {
       type: DataTypes.ENUM('customer', 'merchant', 'admin'),

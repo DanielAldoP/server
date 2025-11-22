@@ -3,13 +3,9 @@ const { successResponse } = require('../helpers/response.helper');
 
 const createRestaurant = async (req, res, next) => {
   try {
-    const { name, full_address, city, description, photo } = req.body;
+    // All validation is handled by middleware, data is already validated
     const owner_id = req.user.id;
-
-    const restaurant = await RestaurantService.createRestaurant({
-      name, full_address, city, description, photo
-    }, owner_id);
-
+    const restaurant = await RestaurantService.createRestaurant(req.body, owner_id);
     res.status(201).json(successResponse(restaurant, 'Restaurant created successfully. Awaiting admin verification.'));
   } catch (error) {
     next(error);
@@ -46,14 +42,11 @@ const getRestaurantById = async (req, res, next) => {
 const updateRestaurant = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { name, full_address, city, description, photo } = req.body;
     const user_id = req.user.id;
     const userRole = req.user.role;
 
-    const restaurant = await RestaurantService.updateRestaurant(id, {
-      name, full_address, city, description, photo
-    }, user_id, userRole);
-
+    // All validation is handled by middleware, data is already validated
+    const restaurant = await RestaurantService.updateRestaurant(id, req.body, user_id, userRole);
     res.json(successResponse(restaurant, 'Restaurant updated successfully'));
   } catch (error) {
     next(error);

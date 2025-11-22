@@ -22,15 +22,10 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       field: 'name'
     },
-    full_address: {
-      type: DataTypes.TEXT,
+    address_id: {
+      type: DataTypes.INTEGER,
       allowNull: false,
-      field: 'full_address'
-    },
-    city: {
-      type: DataTypes.STRING(100),
-      allowNull: false,
-      field: 'city'
+      field: 'address_id'
     },
     description: {
       type: DataTypes.TEXT,

@@ -1,13 +1,11 @@
 const { Review, DailyOrder, User, Restaurant, Order } = require('../models');
 const { NotFoundError, ForbiddenError, ValidationError } = require('../helpers/error.helper');
-const { validateNumber, validateRequired } = require('../helpers/validation.helper');
 
 class ReviewService {
   static async createReview(reviewData, customer_id) {
     const { daily_order_id, rating, review } = reviewData;
 
-    validateRequired(daily_order_id, 'Daily order ID');
-    validateNumber(rating, 'Rating', 1, 5);
+    // Validation is handled by middleware
 
     // Check if daily order exists and belongs to the user
     const dailyOrder = await DailyOrder.findByPk(daily_order_id, {

@@ -2,6 +2,8 @@
 
 A comprehensive Node.js backend for a daily catering platform that connects customers with local restaurants for multi-day meal ordering.
 
+**🤖 This README was created and maintained by Claude, your AI development assistant**
+
 ## 🚀 Features
 
 ### Customer Features
@@ -394,9 +396,79 @@ The application uses the following main tables:
 - Password hashing with bcrypt
 - Request rate limiting
 - CORS configuration
-- Input validation with Joi
+- Dynamic schema-based input validation (automated validation system)
 - SQL injection prevention with Sequelize ORM
 - Helmet.js for security headers
+
+## 📝 Validation System
+
+The application uses a **dynamic schema-based validation system** that automatically validates incoming requests without defining validation rules one by one.
+
+### How It Works
+
+1. **Schema Definition**: Validation rules are defined in JSON schemas located in `src/helpers/dynamic-validator.helper.js`
+2. **Middleware Integration**: Routes use `validateDynamic('schema.path')` middleware
+3. **Automatic Validation**: Request data is automatically validated and cleaned before reaching controllers
+4. **Error Handling**: Consistent validation error responses with detailed field-level information
+
+### Example Usage
+
+```javascript
+// Route definition
+router.post('/register', validateDynamic('auth.register'), authController.register);
+
+// Controller (no manual validation needed)
+const register = async (req, res, next) => {
+  // req.body is already validated and cleaned
+  const result = await AuthService.register(req.body);
+  res.json(ResponseHelper.success(result));
+};
+```
+
+### Supported Validation Types
+
+- **String**: Length validation, trimming
+- **Email**: Format validation and normalization
+- **Phone**: Phone number format validation
+- **Password**: Complexity requirements with regex patterns
+- **Number**: Range validation (min/max)
+- **Enum**: Value validation against allowed options
+- **Date**: Date format and future/past date validation
+- **Array**: Item count and item schema validation
+- **URL**: URL format validation
+
+### Adding New Validation Schemas
+
+```javascript
+// Add a new schema dynamically
+DynamicValidator.addSchema('product', 'create', {
+  name: {
+    type: 'string',
+    required: true,
+    minLength: 3,
+    maxLength: 100,
+    trim: true
+  },
+  price: {
+    type: 'number',
+    required: true,
+    min: 0.01,
+    max: 99999.99
+  }
+});
+
+// Use it in routes
+router.post('/products', validateDynamic('product.create'), productController.create);
+```
+
+### Benefits of This Approach
+
+- ✅ **No Repetitive Code**: Don't define validation rules multiple times
+- ✅ **Centralized Management**: All validation logic in one place
+- ✅ **Type Safety**: Automatic type checking and conversion
+- ✅ **Easy Maintenance**: Update schemas in one location
+- ✅ **Consistent Errors**: Standardized error response format
+- ✅ **Flexible**: Support for conditional validation and custom rules
 
 ## 🚨 Error Handling
 

@@ -29,13 +29,6 @@ const registerValidation = [
     .notEmpty()
     .withMessage('Phone number is required'),
 
-  body('city')
-    .trim()
-    .isLength({ min: 2, max: 100 })
-    .withMessage('City must be between 2 and 100 characters long')
-    .notEmpty()
-    .withMessage('City is required'),
-
   body('role')
     .optional()
     .isIn(['customer', 'merchant'])

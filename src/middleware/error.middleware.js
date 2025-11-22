@@ -1,6 +1,7 @@
 const { ValidationError } = require('sequelize');
 const { ApiError } = require('../helpers/error.helper');
 const { ResponseHelper } = require('../helpers/response.helper');
+const { ValidationError: CustomValidationError } = require('../helpers/error.helper');
 
 const errorHandler = (err, req, res, next) => {
   let error = { ...err };
@@ -35,6 +36,13 @@ const errorHandler = (err, req, res, next) => {
   if (err.name === 'TokenExpiredError') {
     const message = 'Token expired';
     return res.status(401).json(ResponseHelper.unauthorized(message));
+  }
+
+  // Custom validation error (express-validator)
+  if (err instanceof CustomValidationError) {
+    const message = err.message;
+    const errors = err.details || [];
+    return res.status(400).json(ResponseHelper.error(message, 400, errors));
   }
 
   // Custom API error

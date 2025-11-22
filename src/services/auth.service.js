@@ -1,33 +1,14 @@
 const { userRepository } = require('../repositories');
 const { generateToken } = require('../helpers/jwt.helper');
 const {
-  ValidationError,
   UnauthorizedError,
   ConflictError,
   NotFoundError
 } = require('../helpers/error.helper');
-const {
-  validateRequired,
-  validateEmail,
-  validatePhone,
-  validatePassword
-} = require('../helpers/validation.helper');
 
 class AuthService {
   static async register(userData) {
-    const { name, email, password, phone_number, city, role = 'customer' } = userData;
-
-    // Validate required fields
-    validateRequired(name, 'Name');
-    validateRequired(email, 'Email');
-    validateRequired(password, 'Password');
-    validateRequired(phone_number, 'Phone number');
-    validateRequired(city, 'City');
-
-    // Validate field formats
-    validateEmail(email);
-    validatePhone(phone_number);
-    validatePassword(password);
+    const { name, email, password, phone_number, role = 'customer' } = userData;
 
     // Check if user already exists
     const existingUser = await userRepository.findByEmail(email);
@@ -41,7 +22,6 @@ class AuthService {
       email,
       password,
       phone_number,
-      city,
       role
     });
 
@@ -54,7 +34,6 @@ class AuthService {
         name: user.name,
         email: user.email,
         phone_number: user.phone_number,
-        city: user.city,
         role: user.role,
         is_active: user.is_active
       },
@@ -63,10 +42,6 @@ class AuthService {
   }
 
   static async login(email, password) {
-    // Validate required fields
-    validateRequired(email, 'Email');
-    validateRequired(password, 'Password');
-
     // Find user with wallet
     const user = await userRepository.findByEmailWithWallet(email);
 
@@ -114,22 +89,8 @@ class AuthService {
   }
 
   static async updateProfile(userId, updateData) {
-    const { name, phone_number, city } = updateData;
-
-    // Validate fields if provided
-    if (name) validateRequired(name, 'Name');
-    if (phone_number) validatePhone(phone_number);
-    if (city) validateRequired(city, 'City');
-
-    // Update user
-    await userRepository.update(
-      {
-        ...(name && { name }),
-        ...(phone_number && { phone_number }),
-        ...(city && { city })
-      },
-      { id: userId }
-    );
+    // Update user with validated data
+    await userRepository.update(updateData, { id: userId });
 
     // Get updated user
     return await userRepository.findById(userId, {
@@ -138,10 +99,6 @@ class AuthService {
   }
 
   static async changePassword(userId, currentPassword, newPassword) {
-    validateRequired(currentPassword, 'Current password');
-    validateRequired(newPassword, 'New password');
-    validatePassword(newPassword);
-
     const user = await userRepository.findById(userId);
     if (!user) {
       throw new NotFoundError('User');

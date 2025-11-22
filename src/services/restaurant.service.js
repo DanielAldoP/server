@@ -1,16 +1,10 @@
 const { Restaurant, RestaurantWallet, User, Menu, DailyMenu, Review } = require('../models');
 const { createNotification } = require('../helpers/notification.helper');
 const { NotFoundError, ForbiddenError, ValidationError } = require('../helpers/error.helper');
-const { validateRequired } = require('../helpers/validation.helper');
 
 class RestaurantService {
   static async createRestaurant(restaurantData, owner_id) {
     const { name, full_address, city, description, photo } = restaurantData;
-
-    // Validate required fields
-    validateRequired(name, 'Restaurant name');
-    validateRequired(full_address, 'Address');
-    validateRequired(city, 'City');
 
     // Create restaurant
     const restaurant = await Restaurant.create({
@@ -184,15 +178,7 @@ class RestaurantService {
   }
 
   static async verifyRestaurant(id, status, rejection_reason) {
-    validateRequired(status, 'Status');
-
-    if (!['active', 'rejected'].includes(status)) {
-      throw new ValidationError('Status must be either active or rejected');
-    }
-
-    if (status === 'rejected' && !rejection_reason) {
-      throw new ValidationError('Rejection reason is required when rejecting a restaurant');
-    }
+    // Basic validation is handled by middleware
 
     const restaurant = await Restaurant.findByPk(id);
     if (!restaurant) {

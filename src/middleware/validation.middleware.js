@@ -8,8 +8,9 @@ const validateRequest = (validations) => {
 
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log(errors, 'ini errors')
       const errorMessages = errors.array().map(error => ({
-        field: error.param,
+        field: error.path || error.param,
         message: error.msg,
         value: error.value
       }));
